@@ -34,8 +34,8 @@
     }
     th.due, td.due { width: 5%; text-align: right; }
     th.amount, td.amount { width: 10%; text-align: right; }
-    th.account, td.account { width: 45%; text-align: left; }
     th.autopay, td.autopay { width: 10%; text-align: center; }
+    th.account, td.account { width: 45%; text-align: left; }
     th.delete, td.delete { width: 10%; text-align: center; }
     input[type="number"] {
       width: 90%;
@@ -57,7 +57,7 @@
       font-weight: bold;
       background: #f0f0f3;
       border-top: none;
-      text-align: center;
+      text-align: left;
     }
     .add-btn {
       margin-top: 10px;
@@ -100,8 +100,8 @@
         <tr>
           <th class="due">DueDate</th>
           <th class="amount">Amount</th>
-          <th class="account">Account</th>
           <th class="autopay">AutoPay</th>
+          <th class="account">Account</th>
           <th class="delete"></th>
         </tr>
       </thead>
@@ -180,6 +180,20 @@
         tdAmount.appendChild(inputAmount);
         tr.appendChild(tdAmount);
 
+        
+        // AutoPay (checkbox)
+        const tdAutoPay = document.createElement('td');
+        tdAutoPay.className = 'autopay';
+        const inputAutoPay = document.createElement('input');
+        inputAutoPay.type = 'checkbox';
+        inputAutoPay.checked = !!row.AutoPay;
+        inputAutoPay.onchange = () => {
+          data[idx].AutoPay = inputAutoPay.checked;
+          saveData(data);
+        };
+        tdAutoPay.appendChild(inputAutoPay);
+        tr.appendChild(tdAutoPay);
+
         // Account (alphanumeric, left)
         const tdAccount = document.createElement('td');
         tdAccount.className = 'account';
@@ -193,18 +207,6 @@
         tdAccount.appendChild(inputAccount);
         tr.appendChild(tdAccount);
 
-        // AutoPay (checkbox)
-        const tdAutoPay = document.createElement('td');
-        tdAutoPay.className = 'autopay';
-        const inputAutoPay = document.createElement('input');
-        inputAutoPay.type = 'checkbox';
-        inputAutoPay.checked = !!row.AutoPay;
-        inputAutoPay.onchange = () => {
-          data[idx].AutoPay = inputAutoPay.checked;
-          saveData(data);
-        };
-        tdAutoPay.appendChild(inputAutoPay);
-        tr.appendChild(tdAutoPay);
 
         // Delete button
         const tdDelete = document.createElement('td');
