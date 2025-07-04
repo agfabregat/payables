@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>PAYABLES</title>
   <style>
     body {
@@ -20,12 +20,9 @@
       width: 100%;
       margin-bottom: 10px;
       background: #fff;
-      /* No border-collapse or border */
     }
     th, td {
-      /*padding: 3px 4px;*/ /* Tighter vertical padding */
       vertical-align: middle;
-      /* No border */
     }
     th {
       background: #f5f5f7;
@@ -46,7 +43,6 @@
       width: 98%;
       box-sizing: border-box;
     }
-    /* Alternating row backgrounds */
     tbody tr:nth-child(odd) {
       background-color: #f9f9fb;
     }
@@ -105,9 +101,7 @@
           <th class="delete"></th>
         </tr>
       </thead>
-      <tbody>
-        <!-- Rows go here -->
-      </tbody>
+      <tbody></tbody>
       <tfoot>
         <tr class="grandtotal-row">
           <td colspan="5" id="grandtotal-cell">GrandTotal: 0.00</td>
@@ -116,6 +110,7 @@
     </table>
     <button class="add-btn" onclick="addRow()">ADD</button>
   </section>
+
   <script>
     const STORAGE_KEY = 'payables_json';
 
@@ -127,9 +122,8 @@
           data = JSON.parse(raw);
         }
       } catch (e) {
-        // Ignore parse errors, treat as empty
+        // ignore parse error
       }
-      // Sort by DueDate (numeric, ascending)
       data.sort((a, b) => Number(a.DueDate) - Number(b.DueDate));
       return data;
     }
@@ -138,14 +132,25 @@
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
+    function updateGrandTotal() {
+      const data = loadData();
+      let total = 0;
+      data.forEach(row => {
+        const amt = parseFloat(row.Amount);
+        if (!isNaN(amt)) total += amt;
+      });
+      document.getElementById('grandtotal-cell').textContent =
+        'GrandTotal: ' + total.toFixed(2);
+    }
+
     function renderTable() {
       const tbody = document.querySelector('#payables-table tbody');
       tbody.innerHTML = '';
       const data = loadData();
+
       data.forEach((row, idx) => {
         const tr = document.createElement('tr');
 
-        // DueDate (numeric, right)
         const tdDue = document.createElement('td');
         tdDue.className = 'due';
         const inputDue = document.createElement('input');
@@ -157,12 +162,13 @@
           inputDue.value = inputDue.value.replace(/[^0-9]/g, '');
           data[idx].DueDate = inputDue.value;
           saveData(data);
-          renderTable(); // resort
+        };
+        inputDue.onblur = () => {
+          renderTable(); // only re-sort after blur
         };
         tdDue.appendChild(inputDue);
         tr.appendChild(tdDue);
 
-        // Amount (numeric, right)
         const tdAmount = document.createElement('td');
         tdAmount.className = 'amount';
         const inputAmount = document.createElement('input');
@@ -180,8 +186,6 @@
         tdAmount.appendChild(inputAmount);
         tr.appendChild(tdAmount);
 
-        
-        // AutoPay (checkbox)
         const tdAutoPay = document.createElement('td');
         tdAutoPay.className = 'autopay';
         const inputAutoPay = document.createElement('input');
@@ -194,7 +198,6 @@
         tdAutoPay.appendChild(inputAutoPay);
         tr.appendChild(tdAutoPay);
 
-        // Account (alphanumeric, left)
         const tdAccount = document.createElement('td');
         tdAccount.className = 'account';
         const inputAccount = document.createElement('input');
@@ -207,8 +210,6 @@
         tdAccount.appendChild(inputAccount);
         tr.appendChild(tdAccount);
 
-
-        // Delete button
         const tdDelete = document.createElement('td');
         tdDelete.className = 'delete';
         const btnDelete = document.createElement('button');
@@ -224,6 +225,7 @@
 
         tbody.appendChild(tr);
       });
+
       updateGrandTotal();
     }
 
@@ -234,18 +236,6 @@
       renderTable();
     }
 
-    function updateGrandTotal() {
-      const data = loadData();
-      let total = 0;
-      data.forEach(row => {
-        const amt = parseFloat(row.Amount);
-        if (!isNaN(amt)) total += amt;
-      });
-      document.getElementById('grandtotal-cell').textContent =
-        'GrandTotal: ' + total.toFixed(2);
-    }
-
-    // Initial render
     renderTable();
   </script>
 </body>
