@@ -9,49 +9,52 @@
       margin: 40px;
       background: #fafafa;
     }
-    header { text-align: center; margin-bottom: 30px; }
-    h1 { letter-spacing: 2px; }
-
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    h1 {
+      letter-spacing: 2px;
+    }
     table {
       width: 100%;
       margin-bottom: 10px;
       background: #fff;
     }
-
-    th, td { vertical-align: middle; }
+    th, td {
+      vertical-align: middle;
+    }
     th {
       background: #f5f5f7;
       font-weight: bold;
       text-align: left;
     }
-
     th.due, td.due { width: 5%; text-align: right; }
     th.amount, td.amount { width: 10%; text-align: right; }
     th.autopay, td.autopay { width: 5%; text-align: center; }
     th.account, td.account { width: 45%; text-align: left; }
     th.delete, td.delete { width: 10%; text-align: center; }
-
     input[type="number"] {
       width: 90%;
       box-sizing: border-box;
       text-align: right;
     }
-
     input[type="text"] {
       width: 98%;
       box-sizing: border-box;
     }
-
-    tbody tr:nth-child(odd) { background-color: #f9f9fb; }
-    tbody tr:nth-child(even) { background-color: #f3f3f6; }
-
+    tbody tr:nth-child(odd) {
+      background-color: #f9f9fb;
+    }
+    tbody tr:nth-child(even) {
+      background-color: #f3f3f6;
+    }
     .grandtotal-row td {
       font-weight: bold;
       background: #f0f0f3;
       border-top: none;
       text-align: left;
     }
-
     .add-btn {
       margin-top: 10px;
       padding: 7px 18px;
@@ -62,9 +65,9 @@
       border-radius: 3px;
       cursor: pointer;
     }
-
-    .add-btn:hover { background: #0056b3; }
-
+    .add-btn:hover {
+      background: #0056b3;
+    }
     .delete-btn {
       background: #ff4d4d;
       color: #fff;
@@ -75,10 +78,12 @@
       width: 32px;
       height: 32px;
     }
-
-    .delete-btn:hover { background: #c82333; }
-
-    td input[type="checkbox"] { transform: scale(1.2); }
+    .delete-btn:hover {
+      background: #c82333;
+    }
+    td input[type="checkbox"] {
+      transform: scale(1.2);
+    }
   </style>
 </head>
 <body>
@@ -107,61 +112,69 @@
   </section>
 
   <script>
-    const STORAGE_KEY = 'payables2_json';
-    const CLOUD_FILENAME = 'payables2.json';
-    const API_BASE = 'https://your-smarterasp-url.com/api/file/';
+const STORAGE_KEY = 'payables_json';
+const CLOUD_FILENAME = 'payables2.json'; // update if needed
+const API_BASE = 'https://your-smarterasp-url.com/api/file/'; // replace with your real endpoint
 
-    function initializeData() {
-      fetch(API_BASE + CLOUD_FILENAME)
-        .then(res => {
-          if (!res.ok) throw new Error('Cloud load failed');
-          return res.json();
-        })
-        .then(json => {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
-          renderTable();
-        })
-        .catch(() => {
-          renderTable(); // fallback to local
-        });
+function initializeData() {
+  fetch(API_BASE + CLOUD_FILENAME)
+    .then(res => {
+      if (!res.ok) throw new Error('Cloud load failed');
+      return res.json();
+    })
+    .then(json => {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(json));
+      renderTable();
+    })
+    .catch(() => {
+      renderTable(); // fallback to local
+    });
+}
+
+function syncToCloud() {
+  const data = loadData();
+  saveData(data);
+  fetch(API_BASE + CLOUD_FILENAME, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  }).catch(() => {});
+}
+
+  function loadData() {
+    let data = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        data = JSON.parse(raw);
+      }
+    } catch (e) {
+      // ignore parse errors
     }
 
-    function loadData() {
-      let data = [];
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) data = JSON.parse(raw);
-      } catch (e) {}
-      data.sort((a, b) => {
-        const aD = a.DueDate?.trim();
-        const bD = b.DueDate?.trim();
-        if (aD === '' && bD === '') return 0;
-        if (aD === '') return 1;
-        if (bD === '') return -1;
-        return Number(aD) - Number(bD);
-      });
-      return data;
-    }
+    // Sort: push blank DueDates to the bottom
+    data.sort((a, b) => {
+      const dueA = a.DueDate?.trim();
+      const dueB = b.DueDate?.trim();
+
+      if (dueA === '' && dueB === '') return 0;
+      if (dueA === '') return 1;
+      if (dueB === '') return -1;
+      return Number(dueA) - Number(dueB);
+    });
+
+    return data;
+  }
 
     function saveData(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     }
 
-    function syncToCloud() {
-      const data = loadData();
-      saveData(data);
-      fetch(API_BASE + CLOUD_FILENAME, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
-      }).catch(() => {});
-    }
-
     function updateGrandTotal() {
       const data = loadData();
       let total = 0;
-      data.forEach(r => {
-        const amt = parseFloat(r.Amount);
+      data.forEach(row => {
+        const amt = parseFloat(row.Amount);
         if (!isNaN(amt)) total += amt;
       });
       document.getElementById('grandtotal-cell').textContent =
@@ -176,7 +189,6 @@
       data.forEach((row, idx) => {
         const tr = document.createElement('tr');
 
-        // DueDate input
         const tdDue = document.createElement('td');
         tdDue.className = 'due';
         const inputDue = document.createElement('input');
@@ -189,11 +201,13 @@
           data[idx].DueDate = inputDue.value;
           saveData(data);
         };
-        inputDue.onblur = () => syncToCloud();
+inputDue.onblur = () => {
+  syncToCloud();
+  renderTable();
+};
         tdDue.appendChild(inputDue);
         tr.appendChild(tdDue);
 
-        // Amount input
         const tdAmount = document.createElement('td');
         tdAmount.className = 'amount';
         const inputAmount = document.createElement('input');
@@ -208,11 +222,11 @@
           saveData(data);
           updateGrandTotal();
         };
-        inputAmount.onblur = () => syncToCloud();
         tdAmount.appendChild(inputAmount);
         tr.appendChild(tdAmount);
-
-        // AutoPay checkbox
+inputAmount.onblur = () => {
+  syncToCloud();
+};
         const tdAutoPay = document.createElement('td');
         tdAutoPay.className = 'autopay';
         const inputAutoPay = document.createElement('input');
@@ -221,12 +235,14 @@
         inputAutoPay.onchange = () => {
           data[idx].AutoPay = inputAutoPay.checked;
           saveData(data);
-          syncToCloud();
         };
         tdAutoPay.appendChild(inputAutoPay);
         tr.appendChild(tdAutoPay);
+        inputAutoPay.onchange = () => {
+  saveData(data);
+  syncToCloud();
+};
 
-        // Account input
         const tdAccount = document.createElement('td');
         tdAccount.className = 'account';
         const inputAccount = document.createElement('input');
@@ -236,22 +252,23 @@
           data[idx].Account = inputAccount.value;
           saveData(data);
         };
-        inputAccount.onblur = () => syncToCloud();
         tdAccount.appendChild(inputAccount);
         tr.appendChild(tdAccount);
+        inputAccount.onblur = () => {
+  syncToCloud();
+};
 
-        // Delete button
         const tdDelete = document.createElement('td');
         tdDelete.className = 'delete';
         const btnDelete = document.createElement('button');
         btnDelete.className = 'delete-btn';
         btnDelete.textContent = 'X';
-        btnDelete.onclick = () => {
-          data.splice(idx, 1);
-          saveData(data);
-          syncToCloud();
-          renderTable();
-        };
+btnDelete.onclick = () => {
+  data.splice(idx, 1);
+  saveData(data);
+  syncToCloud();
+  renderTable();
+};
         tdDelete.appendChild(btnDelete);
         tr.appendChild(tdDelete);
 
@@ -265,12 +282,10 @@
       const data = loadData();
       data.push({ DueDate: '', Amount: '', Account: '', AutoPay: false });
       saveData(data);
-      syncToCloud();
       renderTable();
     }
 
-        // Kick things off
-    initializeData();
+initializeData();
   </script>
 </body>
 </html>
