@@ -114,19 +114,30 @@
   <script>
     const STORAGE_KEY = 'payables_json';
 
-    function loadData() {
-      let data = [];
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          data = JSON.parse(raw);
-        }
-      } catch (e) {
-        // ignore parse error
+  function loadData() {
+    let data = [];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        data = JSON.parse(raw);
       }
-      data.sort((a, b) => Number(a.DueDate) - Number(b.DueDate));
-      return data;
+    } catch (e) {
+      // ignore parse errors
     }
+
+    // Sort: push blank DueDates to the bottom
+    data.sort((a, b) => {
+      const dueA = a.DueDate?.trim();
+      const dueB = b.DueDate?.trim();
+
+      if (dueA === '' && dueB === '') return 0;
+      if (dueA === '') return 1;
+      if (dueB === '') return -1;
+      return Number(dueA) - Number(dueB);
+    });
+
+    return data;
+  }
 
     function saveData(data) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
